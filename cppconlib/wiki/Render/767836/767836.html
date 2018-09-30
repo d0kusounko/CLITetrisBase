@@ -1,0 +1,82 @@
+<div class="wikidoc"><h2>Project Description</h2>This projects provides a small C&#43;&#43; template library for manipulating the settings of a Windows console &#40;colors, text position, input mode, etc.&#41;.<br />
+<h2>Features</h2>This library provides a set of helper classes, functions and constants in the header <b>conmanip.h</b> for manipulating a Windows console (using the <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms682073(v=vs.85).aspx">Windows console functions</a>). The library features the following components:
+<ul><li><b>console_context&lt;T&gt;</b>: represents a context object for console operations; its main purpose is restoring console settings; typedefs for the three consoles are available (<b>console_in_context</b>, <b>console_out_context</b> and <b>console_err_context</b>)</li>
+<li><b>console&lt;T&gt;</b>: represents a console objects providing operations such as changing the foreground and background colors, the input mode, screen buffer size, title, and others; typedefs for the three consoles are available (<b>console_in</b>, <b>console_out</b> and <b>console_err</b>)</li>
+<li>manipulating functions that can be used with cout/wcout and cin/wcin: <b>settextcolor()</b>/<b>restoretextcolor()</b>, <b>setbgcolor()</b>/<b>restorebgcolor()</b>, <b>setcolors()</b>, <b>setmode()</b>/<b>clearmode()</b>, <b>setposx()</b>/<b>setposy()</b>/<b>setpos()</b>. </li></ul>
+
+<h2>Requirements</h2>The library is written with C++11 features and requires Visual Studio 2012 or newer.<br />
+<h2>NuGet</h2>You can install the library to your projects using the NuGet Package Manager. A package for cppconlib is available <a href="https://www.nuget.org/packages/cppconlib">here</a>.<br />
+<h2>Examples</h2>The following example prints some text in custom colors and then reads text in a different set of colors.<br /><br /><div style="color:Black;background-color:White;"><pre>
+#include <span style="color:#A31515;">&quot;conmanip.h&quot;</span>
+<span style="color:Blue;">using</span> <span style="color:Blue;">namespace</span> conmanip;
+
+#include &lt;iostream&gt;
+
+<span style="color:Blue;">int</span> main()
+{
+   <span style="color:Green;">// create a console context object, used for restoring console settings</span>
+   console_out_context ctxout;
+   <span style="color:Green;">// create a console object</span>
+   console_out conout(ctxout);
+
+   <span style="color:Green;">// change the title of the console</span>
+   conout.settitle(<span style="color:#A31515;">&quot;cppconlib&quot;</span>);
+
+   <span style="color:Green;">// output text with colors</span>
+   std::cout 
+      &lt;&lt; settextcolor(console_text_colors::light_yellow)
+      &lt;&lt; setbgcolor(console_bg_colors::cyan)
+      &lt;&lt; <span style="color:#A31515;">&quot;This text is colored: &quot;</span>;
+
+   <span style="color:Green;">// read text with colors</span>
+   std::string text;
+   std::cin 
+      &gt;&gt; settextcolor(console_text_colors::cyan)
+      &gt;&gt; setbgcolor(console_bg_colors::light_yellow)
+      &gt;&gt; text;
+
+   std::cout &lt;&lt; std::endl;
+
+   <span style="color:Green;">// restore console attributes (text and background colors)</span>
+   ctxout.restore(console_cleanup_options::restore_attibutes);
+
+   <span style="color:Blue;">return</span> 0;
+} <span style="color:Green;">// -&gt; console settings are restored here when the context object goes out of scope</span>
+</pre></div><br />Here is the output for this program.<br /><br /><img src="http://download-codeplex.sec.s-msft.com/Download?ProjectName=cppconlib&DownloadId=721056" alt="cppconlib1.png" title="cppconlib1.png" /><br /><br />The following code prints a rhomb to the console:<br /><br /><div style="color:Black;background-color:White;"><pre>
+<span style="color:Blue;">int</span> main()
+{
+   console_out_context ctxout;
+   console_out conout(ctxout);
+
+   conout.settitle(<span style="color:#A31515;">&quot;cppconlib&quot;</span>);
+
+   <span style="color:Blue;">int</span> depth;
+   std::cout &lt;&lt; <span style="color:#A31515;">&quot;Depth (1-9)? &quot;</span>;
+   std::cin &gt;&gt; depth;
+
+   <span style="color:Blue;">int</span> middle = conout.getsize().X/2;
+   <span style="color:Blue;">for</span>(<span style="color:Blue;">int</span> i = 1; i &lt;= depth; ++i)
+   {
+      std::cout &lt;&lt; setposx(middle-i+1);
+
+      <span style="color:Blue;">for</span>(<span style="color:Blue;">int</span> j = 1; j&lt;=i; ++j)
+      {
+         std::cout &lt;&lt; i &lt;&lt; <span style="color:#A31515;">&quot; &quot;</span>;
+      }
+      std::cout &lt;&lt; <span style="color:#A31515;">&quot;\n&quot;</span>;
+   }
+
+   <span style="color:Blue;">for</span>(<span style="color:Blue;">int</span> i = depth-1; i &gt;=1; --i)
+   {
+      std::cout &lt;&lt; setposx(middle-i+1);
+
+      <span style="color:Blue;">for</span>(<span style="color:Blue;">int</span> j = 1; j&lt;=i; ++j)
+      {
+         std::cout &lt;&lt; i &lt;&lt; <span style="color:#A31515;">&quot; &quot;</span>;
+      }
+      std::cout &lt;&lt; <span style="color:#A31515;">&quot;\n&quot;</span>;
+   }
+
+   <span style="color:Blue;">return</span> 0;
+}
+</pre></div><br /><img src="http://download-codeplex.sec.s-msft.com/Download?ProjectName=cppconlib&DownloadId=721058" alt="cppconlib2.png" title="cppconlib2.png" /></div><div class="ClearBoth"></div>

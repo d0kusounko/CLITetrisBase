@@ -1,0 +1,160 @@
+<div class="wikidoc">The library is available in header <b>conmanip.h</b> in the <b>conmanip</b> namespace. There are various types and functions available that are described below.<br />
+<h2>Enumerations</h2>The following enumerations are defined:
+<ul><li><b>console_text_colors</b> defines the available colors for the text</li>
+<li><b>console_bg_colors</b> defines the available colors for the background. The colors for text and background are actually the same, however they are represented by different underlying values as defined by the console APIs.</li>
+<li><b>console_type</b> defines the available (standard) consoles: input, ouput and error</li>
+<li><b>console_modes</b> defines a set of console modes (used by the <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms686033(v=vs.85).aspx">SetConsoleMode</a> function). You can use any combination of
+<ul><li>echo: when set (which is the default) characters typed are visible in the console; when disabled, they are not; the disabled mode is useful when a user needs to enter a password for instance.</li>
+<li>overwrite: when enabled a new character typed in the console overwrites the last character (is displayed in the same position)</li>
+<li>hide_ctrl_c: when enabled, CTRL+C is processed by the system and is not placed in the input buffer</li>
+<li>enable_mouse_selection: enables selection in the console with the mouse</li></ul></li>
+<li><b>console_cleanup_options</b>: defines the options for restoring the (modified) settings of a console. You can use any combination of:
+<ul><li>none: nothing is restore</li>
+<li>restore_pos: only the position of the text is restored</li>
+<li>restore_attibutes: only the text attributes (colors) are restored</li>
+<li>restore_mode: only the console mode is restored</li>
+<li>restore_buffsize: only the buffer size is restored</li>
+<li>restore_all_nopos: all settings except for the position are restored</li>
+<li>restore_all: all settings are restored</li></ul></li></ul>
+
+<h2>console_context class</h2>This is a template class parameterized with the console type (input, output or error) and is used for storing contextual information about a console (handle, screen buffer info, clean-up options and mode). It also allows restoring the (modified) settings, based on the specified clean-up options.<br /><br /><pre>template &lt;console_type StdHandle&gt;
+class console_context
+{
+public:
+  HANDLE                     handle;
+  CONSOLE_SCREEN_BUFFER_INFO scrbuf_info;
+  console_cleanup_options    cleanup;
+  DWORD                      mode;
+
+public:
+  console_context(console_cleanup_options const cleanup = console_cleanup_options::restore_all_nopos);
+  ~console_context();
+
+  void restore();
+  void restore(console_cleanup_options const options);
+};</pre><br />Several typedefs are available:<br /><br /><pre>typedef console_context&lt;console_type::in&gt;       console_in_context;
+typedef console_context&lt;console_type::out&gt;      console_out_context;
+typedef console_context&lt;console_type::err&gt;      console_err_context;</pre>
+<h3>Examples</h3>You can use a console_context to restore the settings of a console.<br /><br /><pre>void test()
+{
+   console_out_context ctxout;
+   
+   // make changes to the console here
+} // &lt;- changes are restored as the context object goes out of scope</pre><br />If you don&#39;t want to use the default cleanup options (which is restore_all_nopos) you can declare a context with specific restoring options. The following sample declares a context that doesn&#39;t restore anything:<br /><br /><pre>console_out_context ctxout(console_cleanup_options::none);</pre>
+<h2>console class</h2>This is a template class parameterized with the console type (input, output or error). The constructor can take a <b>console_context</b>. If none is specified a default one is used (that uses the restore_all_nopos cleanup options). The <b>console</b> class defines various operations with the console, such as changing the text and background colors, the text position, the console mode, the screen buffer or the console title.<br /><br /><pre>template &lt;console_type StdHandle&gt;
+class console 
+{
+  console_context&lt;StdHandle&gt; context;
+
+public:
+  console(console_context&lt;StdHandle&gt; const &amp; context = console_context&lt;StdHandle&gt;());
+
+  void setmode(console_modes const modes);
+  void clearmode(console_modes const modes);
+  int getposx();
+  void setposx(int const x);
+  int getposy();
+  void setposy(int const y);
+  COORD getpos();
+  void setpos(int const x, int const y);
+  void settextcolor(console_text_colors const &amp; color);
+  void setbgcolor(console_bg_colors const &amp; color);
+  void setcolors(console_text_colors const &amp; text, console_bg_colors const &amp; background);
+  void resetcolors();
+  COORD getsize();
+  bool setsize(int const x, int const y);
+  bool settitle(std::string const &amp; title);
+  bool settitle(std::wstring const &amp; title);
+  std::string gettitle();
+  std::wstring gettitlew();
+};</pre><br />Several typedefs are available:<br /><br /><pre>typedef console&lt;console_type::in&gt;               console_in;
+typedef console&lt;console_type::out&gt;              console_out;
+typedef console&lt;console_type::err&gt;              console_err;</pre>
+<h3>Examples</h3>The following example changes the title of the output console, the text and background colors then sets the position of the text and prints a text. The colors are then restored to their defaults and another text is printed at another position. Then the context object goes out of scope all the default console settings are restored.<br /><br /><pre>int main()
+{
+   console_out_context ctxout(console_cleanup_options::restore_all);
+   console_out conout(ctxout);
+
+   conout.settitle(&quot;cppconlib&quot;);
+   conout.setbgcolor(console_bg_colors::white);
+   conout.settextcolor(console_text_colors::red);
+
+   conout.setpos(10, 10);
+   std::cout &lt;&lt; &quot;colored text&quot;;
+
+   conout.resetcolors();
+
+   conout.setpos(10, 11);
+   std::cout &lt;&lt; &quot;not colored text&quot;;
+
+   return 0;
+}</pre><br /><img src="http://download-codeplex.sec.s-msft.com/Download?ProjectName=cppconlib&DownloadId=722974" alt="cppconlib3.png" title="cppconlib3.png" /><br />
+<h2>Manipulator functions</h2>The library also defines a set of free functions to be used in conjunction with std::cout/std::wcout and std::cin/std::wcin. These are the same functions available in the <b>console</b> class.<br /><br /><pre>console_manipulator&lt;console_text_colors&gt; settextcolor(console_text_colors const color);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_text_colors&gt; settextcolor(console_text_colors const color, console_context&lt;StdHandle&gt; const context);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_text_colors&gt; restoretextcolor(console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;console_bg_colors&gt; setbgcolor(console_bg_colors const color);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_bg_colors&gt; setbgcolor(console_bg_colors const color, console_context&lt;StdHandle&gt; const context);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_text_colors&gt; restorebgcolor(console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;console_colors&gt; setcolors(console_text_colors const text, console_bg_colors const background);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_colors&gt; setcolors(console_text_colors const text, console_bg_colors const background, console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;console_modes&gt; setmode(console_modes const modes);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_modes&gt; setmode(console_modes const modes, console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;console_modes&gt; clearmode(console_modes const modes);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;console_modes&gt; clearmode(console_modes const modes, console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;int&gt; setposx(int const x);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;int&gt; setposx(int const x, console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;int&gt; setposy(int const y);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;int&gt; setposy(int const y, console_context&lt;StdHandle&gt; const context);
+
+console_manipulator&lt;COORD&gt; setpos(int const x, int const y);
+
+template &lt;console_type StdHandle&gt;
+console_manipulator&lt;COORD&gt; setpos(int const x, int const y, console_context&lt;StdHandle&gt; const context);</pre><br />The <b>console_manipulator</b> is a helper class that ease the use of these functions with <b>operator&lt;&lt;</b> and <b>operator&gt;&gt;</b>.<br />
+<h3>Examples</h3>
+The previous example can be re-written like this:<br /><br /><pre>int main()
+{
+   console_out_context ctxout(console_cleanup_options::restore_all);
+   console_out conout(ctxout);
+
+   conout.settitle(L&quot;cppconlib&quot;);
+
+   std::wcout 
+      &lt;&lt; setbgcolor(console_bg_colors::white) 
+      &lt;&lt; settextcolor(console_text_colors::red)
+      &lt;&lt; setpos(10, 10)
+      &lt;&lt; L&quot;colored text&quot;;
+
+   std::wcout 
+      &lt;&lt; restorebgcolor(ctxout) 
+      &lt;&lt; restoretextcolor(ctxout);
+
+   std::wcout 
+      &lt;&lt; setpos(10,11)
+      &lt;&lt; L&quot;not colored text&quot;;
+
+   return 0;
+}</pre><br /></div><div class="ClearBoth"></div>
