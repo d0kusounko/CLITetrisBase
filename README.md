@@ -1,5 +1,5 @@
 # CLITetrisBase
-知人の[齊藤君](https://twitter.com/oshare_na_orc)の人生更生ための学習用プログラムです
+知人の[齊藤君](https://twitter.com/oshare_na_orc)の人生更生プログラムです
 
 主にGame.cppのUpdateGame()とDrawGame()関数の中身をいじって  
 コマンドラインベースのブロック落下パズルゲーム（テト○ス）を作ってください  
